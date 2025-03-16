@@ -18,5 +18,17 @@ export class Vpc extends Construct {
         }
       ]
     });
+
+    // VPC エンドポイント(LambdaがVPC内からシークレットにアクセスできるように)
+    this.vpc.addInterfaceEndpoint('SecretsManagerEndpoint', {
+      service: ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
+      privateDnsEnabled: true,
+    });
+
+    // VPC エンドポイント (CloudWatchログ出力用)
+    this.vpc.addInterfaceEndpoint('CloudWatchLogsEndpoint', {
+      service: ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,
+      privateDnsEnabled: true,
+    });
   }
 }

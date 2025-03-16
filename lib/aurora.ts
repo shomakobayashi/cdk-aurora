@@ -7,8 +7,10 @@ import { Construct } from 'constructs';
 export class Aurora extends Construct {
   public readonly cluster: rds.DatabaseCluster;
   public readonly dbSecret: secretsmanager.Secret;
+  public readonly rdsProxy: rds.DatabaseProxy;
+  public readonly securityGroup: ec2.SecurityGroup;
 
-  constructor(scope: Construct, id: string, vpc: ec2.Vpc) {
+  constructor(scope: Construct, id: string, vpc: ec2.Vpc, lambdaSg?: ec2.SecurityGroup) {
     super(scope, id);
 
     // データベース認証情報のシークレットを作成
@@ -34,6 +36,15 @@ export class Aurora extends Construct {
       'Allow database connections from within VPC'
     );
 
+    // Lambda からの接続を許可
+    if (lambdaSg) {
+      dbSecurityGroup.addIngressRule(
+        lambdaSg,
+        ec2.Port.tcp(5432),
+        'Allow connections from Lambda to RDS Proxy'
+      );
+    }
+
     // Aurora Serverless v2クラスターの作成
     this.cluster = new rds.DatabaseCluster(this, 'AuroraCluster', {
       engine: rds.DatabaseClusterEngine.auroraPostgres({
@@ -53,6 +64,22 @@ export class Aurora extends Construct {
       serverlessV2MaxCapacity: 1,
     });
 
+    // RDS Proxyの作成
+    this.rdsProxy = new rds.DatabaseProxy(this, 'AuroraProxy', {
+      proxyTarget: rds.ProxyTarget.fromCluster(this.cluster),
+      secrets: [this.dbSecret],
+      vpc,
+      securityGroups: [dbSecurityGroup],
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+      },
+      requireTLS: false,
+      idleClientTimeout: cdk.Duration.seconds(900),
+      dbProxyName: 'aurora-serverless-proxy',
+      debugLogging: true,
+    });
+
+
     // 出力値の設定
     new cdk.CfnOutput(this, 'ClusterEndpoint', {
       value: this.cluster.clusterEndpoint.hostname,
@@ -68,5 +95,11 @@ export class Aurora extends Construct {
       value: 'demodb',
       description: 'Default Database Name',
     });
+
+    new cdk.CfnOutput(this, 'ProxyEndpoint', {
+      value: this.rdsProxy.endpoint,
+      description: 'RDS Proxy Endpoint',
+    });
+  
   }
 }
