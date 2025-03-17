@@ -62,6 +62,7 @@ export class Aurora extends Construct {
       }),
       serverlessV2MinCapacity: 0.5,
       serverlessV2MaxCapacity: 1,
+      enableDataApi: true, // Data API を有効化
     });
 
     // RDS Proxyの作成
@@ -77,29 +78,6 @@ export class Aurora extends Construct {
       idleClientTimeout: cdk.Duration.seconds(900),
       dbProxyName: 'aurora-serverless-proxy',
       debugLogging: true,
-    });
-
-
-    // 出力値の設定
-    new cdk.CfnOutput(this, 'ClusterEndpoint', {
-      value: this.cluster.clusterEndpoint.hostname,
-      description: 'Aurora Serverless v2 Cluster Endpoint',
-    });
-
-    new cdk.CfnOutput(this, 'SecretArn', {
-      value: this.dbSecret.secretArn,
-      description: 'Secret ARN for database credentials',
-    });
-
-    new cdk.CfnOutput(this, 'DatabaseName', {
-      value: 'demodb',
-      description: 'Default Database Name',
-    });
-
-    new cdk.CfnOutput(this, 'ProxyEndpoint', {
-      value: this.rdsProxy.endpoint,
-      description: 'RDS Proxy Endpoint',
-    });
-  
+    });  
   }
 }

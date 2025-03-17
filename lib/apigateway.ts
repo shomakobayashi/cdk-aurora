@@ -6,10 +6,14 @@ import { Construct } from 'constructs';
 export class ApiGateway extends Construct {
   public readonly api: apigateway.RestApi;
 
-  constructor(scope: Construct, id: string, lambdaFunction: lambda.Function) {
+  constructor(scope: Construct,
+    id: string,
+    lambdaFunction: lambda.Function,
+    dataApiLambda: lambda.Function  // 追加
+  ) {
     super(scope, id);
 
-    // API Gatewayの作成
+    // API Gateway
     this.api = new apigateway.RestApi(this, 'UsersApi', {
       restApiName: 'Users Service',
       description: 'API Gateway for Aurora PostgreSQL Users',
@@ -19,26 +23,29 @@ export class ApiGateway extends Construct {
       binaryMediaTypes: []
     });
 
-    // Lambda統合の作成
-    const lambdaIntegration = new apigateway.LambdaIntegration(lambdaFunction);
+    /**
+     *  Lambda統合
+     */
+
+    // RDS Proy　Lambda統合
+    const rdsProxyIntegration = new apigateway.LambdaIntegration(lambdaFunction);
+
+    // Data API Lambda統合 （追加）
+    const dataApiIntegration = new apigateway.LambdaIntegration(dataApiLambda);
 
     // ルートパス（/）にGETメソッドを追加
-    this.api.root.addMethod('GET', lambdaIntegration);
+    this.api.root.addMethod('GET', rdsProxyIntegration);
 
-    // usersエンドポイントの作成
-    const users = this.api.root.addResource('users');
-    users.addMethod('GET', lambdaIntegration);  // GET /users - すべてのユーザーを取得
+    /**
+     *  エンドポイント
+     */
 
-    // API GatewayのURLを出力
-    new cdk.CfnOutput(this, 'ApiGatewayUrl', {
-      value: this.api.urlForPath('/users'),
-      description: 'Users API Endpoint URL',
-    });
-    
-    // 完全なAPIのURLも出力
-    new cdk.CfnOutput(this, 'ApiGatewayBaseUrl', {
-      value: this.api.url,
-      description: 'API Gateway Base URL',
-    });
+    // RDS Proxyエンドポイント
+    const rdsProxy = this.api.root.addResource('rdsProxy');
+    rdsProxy.addMethod('GET', rdsProxyIntegration);
+
+    // Data APIエンドポイント
+    const dataApi = this.api.root.addResource('data-api');
+    dataApi.addMethod('GET', dataApiIntegration);
   }
 }

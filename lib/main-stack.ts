@@ -16,9 +16,21 @@ export class MainStack extends cdk.Stack {
     const aurora = new Aurora(this, 'AuroraConstruct', vpc.vpc);
 
     // Lambda関数の作成
-    const lambdaFunction = new Lambda(this, 'LambdaConstruct', vpc.vpc, aurora.dbSecret,aurora.rdsProxy);
+    const lambdaFunction = new Lambda(
+      this,
+      'LambdaConstruct',
+      vpc.vpc,
+      aurora.dbSecret,
+      aurora.rdsProxy,
+      aurora.cluster   // 追加
+    );
     
     // API Gatewayの作成
-    new ApiGateway(this, 'ApiGatewayConstruct', lambdaFunction.rdsProxyLambda);
+    new ApiGateway(
+      this,
+      'ApiGatewayConstruct',
+      lambdaFunction.rdsProxyLambda,
+      lambdaFunction.dataApiLambda   //追加
+    );
   }
 }
