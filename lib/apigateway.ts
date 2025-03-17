@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
+import * as iam from 'aws-cdk-lib/aws-iam';
 
 export class ApiGateway extends Construct {
   public readonly api: apigateway.RestApi;
@@ -19,6 +20,8 @@ export class ApiGateway extends Construct {
       description: 'API Gateway for Aurora PostgreSQL Users',
       deployOptions: {
         stageName: 'prod',
+        // ここでX-Rayトレーシングを有効化（x-ray追加）
+        tracingEnabled: true,
       },
       binaryMediaTypes: []
     });
@@ -47,5 +50,19 @@ export class ApiGateway extends Construct {
     // Data APIエンドポイント
     const dataApi = this.api.root.addResource('data-api');
     dataApi.addMethod('GET', dataApiIntegration);
+  
+    // 追加
+    // API Gateway用のCloudWatchロールを作成
+    const cloudWatchRole = new iam.Role(this, 'ApiGatewayCloudWatchRole', {
+      assumedBy: new iam.ServicePrincipal('apigateway.amazonaws.com'),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonAPIGatewayPushToCloudWatchLogs')
+      ]
+    });
+
+    // アカウントレベルでCloudWatchロールを設定
+    new apigateway.CfnAccount(this, 'ApiGatewayAccount', {
+      cloudWatchRoleArn: cloudWatchRole.roleArn
+    });
   }
 }
