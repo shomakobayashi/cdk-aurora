@@ -26,10 +26,6 @@ export class ApiGateway extends Construct {
       binaryMediaTypes: []
     });
 
-    /**
-     *  Lambda統合
-     */
-
     // RDS Proy　Lambda統合
     const rdsProxyIntegration = new apigateway.LambdaIntegration(lambdaFunction);
 
@@ -39,10 +35,6 @@ export class ApiGateway extends Construct {
     // ルートパス（/）にGETメソッドを追加
     this.api.root.addMethod('GET', rdsProxyIntegration);
 
-    /**
-     *  エンドポイント
-     */
-
     // RDS Proxyエンドポイント
     const rdsProxy = this.api.root.addResource('rdsProxy');
     rdsProxy.addMethod('GET', rdsProxyIntegration);
@@ -51,7 +43,6 @@ export class ApiGateway extends Construct {
     const dataApi = this.api.root.addResource('data-api');
     dataApi.addMethod('GET', dataApiIntegration);
   
-    // 追加
     // API Gateway用のCloudWatchロールを作成
     const cloudWatchRole = new iam.Role(this, 'ApiGatewayCloudWatchRole', {
       assumedBy: new iam.ServicePrincipal('apigateway.amazonaws.com'),

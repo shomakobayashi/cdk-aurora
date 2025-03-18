@@ -2,11 +2,9 @@ import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-sec
 import { Client } from 'pg';
 
 // 環境変数
-const secretArn = process.env.SECRET_ARN || '';
-const dbName = process.env.DB_NAME || 'demodb';
-const proxyEndpoint = process.env.PROXY_ENDPOINT || '';
-
-// SecretsManagerクライアント
+const secretArn = process.env.SECRET_ARN;
+const dbName = process.env.DB_NAME;
+const proxyEndpoint = process.env.PROXY_ENDPOINT;
 const secretsManager = new SecretsManagerClient({ region: process.env.AWS_REGION });
 
 // データベース接続情報を取得する関数
@@ -23,7 +21,6 @@ async function getDbCredentials() {
 
 // Lambda関数ハンドラー
 export const handler = async (event: any): Promise<any> => {
-  console.log('Received event:', JSON.stringify(event, null, 2));
   
   let client: Client | undefined;
   

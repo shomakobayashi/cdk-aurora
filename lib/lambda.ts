@@ -38,7 +38,7 @@ export class Lambda extends Construct {
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
       securityGroups: [this.securityGroup],
       timeout: cdk.Duration.seconds(30),
-      memorySize: 256,
+      memorySize: 128,
       environment: {
         PROXY_ENDPOINT: rdsProxy.endpoint,
         SECRET_ARN: dbSecret.secretArn,
@@ -57,7 +57,7 @@ export class Lambda extends Construct {
       handler: 'handler',
       runtime: lambdaBase.Runtime.NODEJS_20_X,
       timeout: cdk.Duration.seconds(30),
-      memorySize: 256,
+      memorySize: 128,
       environment: {
         CLUSTER_ARN: cluster.clusterArn,
         SECRET_ARN: dbSecret.secretArn,
