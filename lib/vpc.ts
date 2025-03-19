@@ -15,7 +15,12 @@ export class Vpc extends Construct {
           name: 'Private',
           subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
           cidrMask: 24
-        }
+        },
+        {
+          name: 'Public',
+          subnetType: ec2.SubnetType.PUBLIC, // パブリックサブネットを追加
+          cidrMask: 24
+        },
       ]
     });
 

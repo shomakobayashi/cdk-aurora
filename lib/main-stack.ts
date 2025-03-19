@@ -4,6 +4,7 @@ import { Vpc } from './vpc';
 import { Aurora } from './aurora';
 import { Lambda } from './lambda';
 import { ApiGateway } from './apigateway';
+import { LoadTestEc2 } from './ec2';
 
 export class MainStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -32,5 +33,8 @@ export class MainStack extends cdk.Stack {
       lambdaFunction.rdsProxyLambda,
       lambdaFunction.dataApiLambda   //追加
     );
+
+    // EC2インスタンスを作成
+    new LoadTestEc2(this, 'LoadTestEc2', vpc.vpc);
   }
 }
