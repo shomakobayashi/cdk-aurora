@@ -30,7 +30,8 @@ export class MainStack extends cdk.Stack {
     new ApiGateway(
       this,
       'ApiGatewayConstruct',
-      lambdaFunction.rdsProxyLambda,
+      lambdaFunction.rdsProxyGet,
+      lambdaFunction.rdsProxyPost,
       lambdaFunction.dataApiLambda   //追加
     );
 

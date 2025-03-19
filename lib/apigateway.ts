@@ -9,8 +9,9 @@ export class ApiGateway extends Construct {
 
   constructor(scope: Construct,
     id: string,
-    lambdaFunction: lambda.Function,
-    dataApiLambda: lambda.Function  // 追加
+    getLambdaFunction: lambda.Function,
+    postLambdaFunction: lambda.Function,
+    dataApiLambda: lambda.Function
   ) {
     super(scope, id);
 
@@ -20,27 +21,36 @@ export class ApiGateway extends Construct {
       description: 'API Gateway for Aurora PostgreSQL Users',
       deployOptions: {
         stageName: 'prod',
-        // ここでX-Rayトレーシングを有効化（x-ray追加）
         tracingEnabled: true,
       },
       binaryMediaTypes: []
     });
 
-    // RDS Proy　Lambda統合
-    const rdsProxyIntegration = new apigateway.LambdaIntegration(lambdaFunction);
+    // RDS Proxy　Lambda統合(GET)
+    const rdsProxyGetIntegration = new apigateway.LambdaIntegration(getLambdaFunction);
+
+    // RDS Proxy　Lambda統合(POST)
+    const rdsProxyPostIntegration = new apigateway.LambdaIntegration(postLambdaFunction);
 
     // Data API Lambda統合 （追加）
     const dataApiIntegration = new apigateway.LambdaIntegration(dataApiLambda);
 
     // ルートパス（/）にGETメソッドを追加
-    this.api.root.addMethod('GET', rdsProxyIntegration);
+    this.api.root.addMethod('GET', rdsProxyGetIntegration);
 
     // RDS Proxyエンドポイント
     const rdsProxy = this.api.root.addResource('rdsProxy');
-    rdsProxy.addMethod('GET', rdsProxyIntegration);
+
+    // RDS Proxy (GET操作)
+    rdsProxy.addMethod('GET', rdsProxyGetIntegration);
+
+    // RDS Proxy (POST操作)
+    rdsProxy.addMethod('POST', rdsProxyPostIntegration);
 
     // Data APIエンドポイント
     const dataApi = this.api.root.addResource('data-api');
+
+    // Data API GET
     dataApi.addMethod('GET', dataApiIntegration);
   
     // API Gateway用のCloudWatchロールを作成

@@ -11,7 +11,6 @@ export const handler = async (event: any): Promise<any> => {
   console.log('Received event:', JSON.stringify(event, null, 2));
   
   try {
-    // Data APIでクエリを実行
     const result = await rdsData.send(
       new ExecuteStatementCommand({
         resourceArn: clusterArn,
@@ -32,8 +31,6 @@ export const handler = async (event: any): Promise<any> => {
       });
       return user;
     }) || [];
-    
-    // 成功レスポンス
     return {
       statusCode: 200,
       headers: {
@@ -43,12 +40,8 @@ export const handler = async (event: any): Promise<any> => {
         users: users
       })
     };
-    
   } catch (error: unknown) {
-    // エラーログ
     console.error('Error:', error);
-    
-    // エラーレスポンス
     return {
       statusCode: 500,
       headers: {

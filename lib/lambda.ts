@@ -9,7 +9,8 @@ import * as rds from 'aws-cdk-lib/aws-rds';
 import * as iam from 'aws-cdk-lib/aws-iam';  // 追加
 
 export class Lambda extends Construct {
-  public readonly rdsProxyLambda: lambda.NodejsFunction;
+  public readonly rdsProxyGet: lambda.NodejsFunction;
+  public readonly rdsProxyPost: lambda.NodejsFunction;
   public readonly securityGroup: ec2.SecurityGroup;
   public readonly dataApiLambda: lambda.NodejsFunction; // 追加
 
@@ -30,8 +31,8 @@ export class Lambda extends Construct {
     });
 
     // RDS Proxy を使用する Lambda
-    this.rdsProxyLambda = new lambda.NodejsFunction(this, 'RdsProxyLambda', {
-      entry: path.resolve(__dirname, '../lambda/rds-proxy-lambda.ts'),
+    this.rdsProxyGet = new lambda.NodejsFunction(this, 'rdsProxyGet', {
+      entry: path.resolve(__dirname, '../lambda/rds-proxy-get.ts'),
       handler: 'handler',
       runtime: lambdaBase.Runtime.NODEJS_20_X,
       vpc,
@@ -45,7 +46,29 @@ export class Lambda extends Construct {
         DB_NAME: 'demodb',
       },
       bundling: {
-        forceDockerBundling: false, // Dockerを使用しない
+        forceDockerBundling: false,
+        minify: true,
+        nodeModules: ['pg', 'aws-sdk'],
+      },
+    });
+
+    // RDS Proxy を使用する WRITE Lambda
+    this.rdsProxyPost = new lambda.NodejsFunction(this, 'rdsProxyPOST', {
+      entry: path.resolve(__dirname, '../lambda/rds-proxy-post.ts'),
+      handler: 'handler',
+      runtime: lambdaBase.Runtime.NODEJS_20_X,
+      vpc,
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      securityGroups: [this.securityGroup],
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 128,
+      environment: {
+        PROXY_ENDPOINT: rdsProxy.endpoint,
+        SECRET_ARN: dbSecret.secretArn,
+        DB_NAME: 'demodb',
+      },
+      bundling: {
+        forceDockerBundling: false,
         minify: true,
         nodeModules: ['pg', 'aws-sdk'],
       },
@@ -71,8 +94,9 @@ export class Lambda extends Construct {
     });
 
     // Secrets Managerへのアクセス権限を付与
-    dbSecret.grantRead(this.rdsProxyLambda);
-    dbSecret.grantRead(this.dataApiLambda);  // 追加
+    dbSecret.grantRead(this.rdsProxyGet);
+    dbSecret.grantRead(this.rdsProxyPost);
+    dbSecret.grantRead(this.dataApiLambda);
 
     // Data API実行権限を付与　（追加）
     this.dataApiLambda.addToRolePolicy(
