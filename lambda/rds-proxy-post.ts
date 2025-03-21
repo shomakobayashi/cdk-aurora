@@ -15,8 +15,8 @@ async function getDbCredentials() {
 
 async function connectToDb() {
   if (!dbClient) {
+    console.log('Initializing new database connection...');
     const credentials = await getDbCredentials();
-    
     dbClient = new Client({
       host: proxyEndpoint,
       port: 5432,
@@ -29,24 +29,22 @@ async function connectToDb() {
   return dbClient;
 }
 
-// Lambda関数ハンドラー - シンプルなWRITE操作用
-export const handler = async (event: any): Promise<any> => {
+// Lambda関数ハンドラー
+export const handler = async (event: any) => {
   try {
-    
+    // DBに接続
     const client = await connectToDb();
     
-    let userName = 'User';
-    if (event.body) {
-      const requestBody = JSON.parse(event.body);
-      userName = requestBody.data || `User ${Date.now()}`;
-    }
+    // リクエストボディからnameを取得
+    const body = JSON.parse(event.body || '{}');
+    const name = body.name || `Default User ${Date.now()}`;
     
-    // usersテーブルに新しいレコードを挿入
+    // DBにデータを挿入
     const result = await client.query(
       'INSERT INTO users(name) VALUES($1) RETURNING id, name',
-      [userName]
+      [name]
     );
-
+    
     return {
       statusCode: 200,
       body: JSON.stringify({
@@ -54,12 +52,13 @@ export const handler = async (event: any): Promise<any> => {
         user: result.rows[0]
       })
     };
+    
   } catch (error) {
     console.error('Error:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({ 
-        message: 'Internal server error',
+        message: 'Error creating user',
         error: error instanceof Error ? error.message : 'Unknown error'
       })
     };

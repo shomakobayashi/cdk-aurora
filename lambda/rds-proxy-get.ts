@@ -6,38 +6,47 @@ const dbName = process.env.DB_NAME;
 const proxyEndpoint = process.env.PROXY_ENDPOINT;
 const secretsManager = new SecretsManagerClient({ region: process.env.AWS_REGION });
 
-let dbClient: Client | null = null;
-
+// DB認証情報を取得
 async function getDbCredentials() {
   const response = await secretsManager.send(new GetSecretValueCommand({ SecretId: secretArn }));
   return response.SecretString ? JSON.parse(response.SecretString) : null;
 }
 
-async function connectToDb() {
-  if (!dbClient) {
-    console.log('Initializing new database connection...');
+// DB接続を初期化
+let dbClientPromise = (async () => {
+  try {
     const credentials = await getDbCredentials();
-    dbClient = new Client({
+    const client = new Client({
       host: proxyEndpoint,
       port: 5432,
       database: dbName,
       user: credentials.username,
       password: credentials.password,
     });
-    await dbClient.connect();
+    await client.connect();
+    return client;
+  } catch (error) {
+    console.error('DB connection error:', error);
+    throw error;
   }
-  return dbClient;
-}
+})();
 
 // Lambda関数ハンドラー
 export const handler = async () => {
   try {
-    const client = await connectToDb();
+
+    const client = await dbClientPromise;
     const result = await client.query('SELECT * FROM users');
-    return { statusCode: 200, body: JSON.stringify(result.rows) };
+
+    return { 
+      statusCode: 200, 
+      body: JSON.stringify(result.rows) 
+    };
   } catch (error: unknown) {
-    console.error('Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return { statusCode: 500, body: JSON.stringify({ error: errorMessage }) };
+    return { 
+      statusCode: 500, 
+      body: JSON.stringify({ error: errorMessage }) 
+    };
   }
 };
