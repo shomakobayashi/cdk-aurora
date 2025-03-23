@@ -3,16 +3,17 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import { Lambda } from './lambda';
 
 export class ApiGateway extends Construct {
   public readonly api: apigateway.RestApi;
 
   constructor(scope: Construct,
     id: string,
-    getLambdaFunction: lambda.Function,
-    postLambdaFunction: lambda.Function,
-    dataApiGet: lambda.Function,
-    dataApiPost: lambda.Function
+    getLambdaFunction: lambda.IFunction,
+    postLambdaFunction: lambda.IFunction,
+    dataApiGet: lambda.IFunction,
+    dataApiPost: lambda.IFunction
   ) {
     super(scope, id);
 

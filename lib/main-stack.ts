@@ -23,17 +23,17 @@ export class MainStack extends cdk.Stack {
       vpc.vpc,
       aurora.dbSecret,
       aurora.rdsProxy,
-      aurora.cluster   // 追加
+      aurora.cluster
     );
     
-    // API Gatewayの作成
+    // API Gatewayの作成（修正）
     new ApiGateway(
       this,
       'ApiGatewayConstruct',
-      lambdaFunction.rdsProxyGet,
-      lambdaFunction.rdsProxyPost,
-      lambdaFunction.dataApiGet,
-      lambdaFunction.dataApiPost
+      lambdaFunction.rdsProxyGetAlias,
+      lambdaFunction.rdsProxyPostAlias,
+      lambdaFunction.dataApiGetAlias,
+      lambdaFunction.dataApiPostAlias
     );
 
     // EC2インスタンスを作成

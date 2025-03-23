@@ -14,6 +14,10 @@ export class Lambda extends Construct {
   public readonly securityGroup: ec2.SecurityGroup;
   public readonly dataApiGet: lambda.NodejsFunction;
   public readonly dataApiPost: lambda.NodejsFunction;
+  public readonly rdsProxyGetAlias: lambdaBase.Alias;
+  public readonly rdsProxyPostAlias: lambdaBase.Alias;
+  public readonly dataApiGetAlias: lambdaBase.Alias;
+  public readonly dataApiPostAlias: lambdaBase.Alias;
 
   constructor(scope: Construct,
      id: string,
@@ -53,6 +57,12 @@ export class Lambda extends Construct {
       },
     });
 
+    // RDS Proxy GET のエイリアス
+    this.rdsProxyGetAlias = new lambdaBase.Alias(this, 'RdsProxyGetAlias', {
+      aliasName: 'prod',
+      version: this.rdsProxyGet.currentVersion,
+    });
+
     // RDS Proxy（POST）
     this.rdsProxyPost = new lambda.NodejsFunction(this, 'rdsProxyPOST', {
       entry: path.resolve(__dirname, '../lambda/rds-proxy-post.ts'),
@@ -75,6 +85,12 @@ export class Lambda extends Construct {
       },
     });
 
+    // RDS Proxy POST のエイリアス
+    this.rdsProxyPostAlias = new lambdaBase.Alias(this, 'RdsProxyPostAlias', {
+      aliasName: 'prod',
+      version: this.rdsProxyPost.currentVersion,
+    });
+
     // Data API（GET）
     this.dataApiGet = new lambda.NodejsFunction(this, 'dataApiGet', {
       entry: path.resolve(__dirname, '../lambda/data-api-get.ts'),
@@ -94,6 +110,12 @@ export class Lambda extends Construct {
       },
     });
 
+    // Data API GET のエイリアス
+    this.dataApiGetAlias = new lambdaBase.Alias(this, 'DataApiGetAlias', {
+      aliasName: 'prod',
+      version: this.dataApiGet.currentVersion,
+    });
+
     // Data API（POST）
     this.dataApiPost = new lambda.NodejsFunction(this, 'dataApiPost', {
       entry: path.resolve(__dirname, '../lambda/data-api-post.ts'),
@@ -111,6 +133,12 @@ export class Lambda extends Construct {
         minify: true,
         nodeModules: ['@aws-sdk/client-rds-data', '@aws-sdk/client-secrets-manager'],
       },
+    });
+
+    // Data API POST のエイリアスを作成
+    this.dataApiPostAlias = new lambdaBase.Alias(this, 'DataApiPostAlias', {
+      aliasName: 'prod',
+      version: this.dataApiPost.currentVersion,
     });
 
     // Secrets Managerへのアクセス権限を付与
