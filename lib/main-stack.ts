@@ -32,7 +32,8 @@ export class MainStack extends cdk.Stack {
       'ApiGatewayConstruct',
       lambdaFunction.rdsProxyGet,
       lambdaFunction.rdsProxyPost,
-      lambdaFunction.dataApiLambda   //追加
+      lambdaFunction.dataApiGet,
+      lambdaFunction.dataApiPost
     );
 
     // EC2インスタンスを作成

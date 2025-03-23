@@ -6,34 +6,35 @@ const dbName = process.env.DB_NAME;
 const proxyEndpoint = process.env.PROXY_ENDPOINT;
 const secretsManager = new SecretsManagerClient({ region: process.env.AWS_REGION });
 
-let dbClient: Client | null = null;
-
+// DB認証情報を取得
 async function getDbCredentials() {
   const response = await secretsManager.send(new GetSecretValueCommand({ SecretId: secretArn }));
   return response.SecretString ? JSON.parse(response.SecretString) : null;
 }
 
-async function connectToDb() {
-  if (!dbClient) {
-    console.log('Initializing new database connection...');
+// DB接続を初期化
+let dbClientPromise = (async () => {
+  try {
     const credentials = await getDbCredentials();
-    dbClient = new Client({
+    const client = new Client({
       host: proxyEndpoint,
       port: 5432,
       database: dbName,
       user: credentials.username,
       password: credentials.password,
     });
-    await dbClient.connect();
+    await client.connect();
+    return client;
+  } catch (error) {
+    console.error('DB connection error:', error);
+    throw error;
   }
-  return dbClient;
-}
+})();
 
 // Lambda関数ハンドラー
 export const handler = async (event: any) => {
   try {
-    // DBに接続
-    const client = await connectToDb();
+    const client = await dbClientPromise;
     
     // リクエストボディからnameを取得
     const body = JSON.parse(event.body || '{}');
@@ -47,6 +48,7 @@ export const handler = async (event: any) => {
     
     return {
       statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message: 'User created successfully',
         user: result.rows[0]
@@ -54,12 +56,14 @@ export const handler = async (event: any) => {
     };
     
   } catch (error) {
-    console.error('Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
     return {
       statusCode: 500,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         message: 'Error creating user',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: errorMessage
       })
     };
   }

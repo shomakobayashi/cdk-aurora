@@ -8,8 +8,6 @@ const rdsData = new RDSDataClient({ region: process.env.AWS_REGION });
 
 // Lambda関数ハンドラー
 export const handler = async (event: any): Promise<any> => {
-  console.log('Received event:', JSON.stringify(event, null, 2));
-  
   try {
     const result = await rdsData.send(
       new ExecuteStatementCommand({
@@ -31,26 +29,18 @@ export const handler = async (event: any): Promise<any> => {
       });
       return user;
     }) || [];
+    
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        users: users
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ users })
     };
   } catch (error: unknown) {
-    console.error('Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return {
       statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: 'Error querying users table via Data API',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: errorMessage })
     };
   }
 };

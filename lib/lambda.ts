@@ -12,14 +12,15 @@ export class Lambda extends Construct {
   public readonly rdsProxyGet: lambda.NodejsFunction;
   public readonly rdsProxyPost: lambda.NodejsFunction;
   public readonly securityGroup: ec2.SecurityGroup;
-  public readonly dataApiLambda: lambda.NodejsFunction; // 追加
+  public readonly dataApiGet: lambda.NodejsFunction;
+  public readonly dataApiPost: lambda.NodejsFunction;
 
   constructor(scope: Construct,
      id: string,
      vpc: ec2.Vpc,
      dbSecret: secretsmanager.ISecret,
      rdsProxy: rds.DatabaseProxy,
-     cluster: rds.DatabaseCluster  // 追加
+     cluster: rds.DatabaseCluster
   ) {
     super(scope, id);
 
@@ -30,7 +31,7 @@ export class Lambda extends Construct {
       allowAllOutbound: true,
     });
 
-    // RDS Proxy を使用する Lambda
+    // RDS Proxy（GET）
     this.rdsProxyGet = new lambda.NodejsFunction(this, 'rdsProxyGet', {
       entry: path.resolve(__dirname, '../lambda/rds-proxy-get.ts'),
       handler: 'handler',
@@ -52,7 +53,7 @@ export class Lambda extends Construct {
       },
     });
 
-    // RDS Proxy を使用する WRITE Lambda
+    // RDS Proxy（POST）
     this.rdsProxyPost = new lambda.NodejsFunction(this, 'rdsProxyPOST', {
       entry: path.resolve(__dirname, '../lambda/rds-proxy-post.ts'),
       handler: 'handler',
@@ -74,9 +75,28 @@ export class Lambda extends Construct {
       },
     });
 
-    // Data API を使用する Lambda (VPC外で実行可能) (追加)
-    this.dataApiLambda = new lambda.NodejsFunction(this, 'DataApiLambda', {
-      entry: path.resolve(__dirname, '../lambda/data-api-lambda.ts'),
+    // Data API（GET）
+    this.dataApiGet = new lambda.NodejsFunction(this, 'dataApiGet', {
+      entry: path.resolve(__dirname, '../lambda/data-api-get.ts'),
+      handler: 'handler',
+      runtime: lambdaBase.Runtime.NODEJS_20_X,
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 128,
+      environment: {
+        CLUSTER_ARN: cluster.clusterArn,
+        SECRET_ARN: dbSecret.secretArn,
+        DB_NAME: 'demodb',
+      },
+      bundling: {
+        forceDockerBundling: false,
+        minify: true,
+        nodeModules: ['@aws-sdk/client-rds-data', '@aws-sdk/client-secrets-manager'],
+      },
+    });
+
+    // Data API（POST）
+    this.dataApiPost = new lambda.NodejsFunction(this, 'dataApiPost', {
+      entry: path.resolve(__dirname, '../lambda/data-api-post.ts'),
       handler: 'handler',
       runtime: lambdaBase.Runtime.NODEJS_20_X,
       timeout: cdk.Duration.seconds(30),
@@ -96,10 +116,25 @@ export class Lambda extends Construct {
     // Secrets Managerへのアクセス権限を付与
     dbSecret.grantRead(this.rdsProxyGet);
     dbSecret.grantRead(this.rdsProxyPost);
-    dbSecret.grantRead(this.dataApiLambda);
+    dbSecret.grantRead(this.dataApiGet);
+    dbSecret.grantRead(this.dataApiPost);
 
-    // Data API実行権限を付与　（追加）
-    this.dataApiLambda.addToRolePolicy(
+    // Data API（GET）実行権限を付与　（追加）
+    this.dataApiGet.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          'rds-data:ExecuteStatement',
+          'rds-data:BatchExecuteStatement',
+          'rds-data:BeginTransaction',
+          'rds-data:CommitTransaction',
+          'rds-data:RollbackTransaction'
+        ],
+        resources: [cluster.clusterArn],
+      })
+    );
+
+     // Data API(POST)実行権限を付与　（追加）
+     this.dataApiPost.addToRolePolicy(
       new iam.PolicyStatement({
         actions: [
           'rds-data:ExecuteStatement',

@@ -11,7 +11,8 @@ export class ApiGateway extends Construct {
     id: string,
     getLambdaFunction: lambda.Function,
     postLambdaFunction: lambda.Function,
-    dataApiLambda: lambda.Function
+    dataApiGet: lambda.Function,
+    dataApiPost: lambda.Function
   ) {
     super(scope, id);
 
@@ -26,14 +27,17 @@ export class ApiGateway extends Construct {
       binaryMediaTypes: []
     });
 
-    // RDS Proxy　Lambda統合(GET)
+    // RDS Proxy　Lambda統合(GET)    
     const rdsProxyGetIntegration = new apigateway.LambdaIntegration(getLambdaFunction);
 
-    // RDS Proxy　Lambda統合(POST)
+    // RDS Proxy　Lambda統合（POST)
     const rdsProxyPostIntegration = new apigateway.LambdaIntegration(postLambdaFunction);
 
-    // Data API Lambda統合 （追加）
-    const dataApiIntegration = new apigateway.LambdaIntegration(dataApiLambda);
+    // Data API Lambda統合（GET）
+    const dataApiGetIntegration = new apigateway.LambdaIntegration(dataApiGet);
+    
+    // Data API Lambda統合（POST）
+    const dataApiPostIntegration = new apigateway.LambdaIntegration(dataApiPost);
 
     // ルートパス（/）にGETメソッドを追加
     this.api.root.addMethod('GET', rdsProxyGetIntegration);
@@ -47,11 +51,14 @@ export class ApiGateway extends Construct {
     // RDS Proxy (POST操作)
     rdsProxy.addMethod('POST', rdsProxyPostIntegration);
 
-    // Data APIエンドポイント
+    // Data APIエンドポイント（GET）
     const dataApi = this.api.root.addResource('data-api');
 
-    // Data API GET
-    dataApi.addMethod('GET', dataApiIntegration);
+    // Data API （GET）
+    dataApi.addMethod('GET', dataApiGetIntegration);
+
+    // Data API （POST）
+    dataApi.addMethod('POST', dataApiPostIntegration);
   
     // API Gateway用のCloudWatchロールを作成
     const cloudWatchRole = new iam.Role(this, 'ApiGatewayCloudWatchRole', {
