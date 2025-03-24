@@ -64,7 +64,7 @@ export class Aurora extends Construct {
       serverlessV2MaxCapacity: 1,
       enableDataApi: true, // data API有効化
       enablePerformanceInsights: true, // PerformanceInsights有効化
-      performanceInsightRetention: rds.PerformanceInsightRetention.DEFAULT,
+      performanceInsightRetention: rds.PerformanceInsightRetention.DEFAULT, // Standard（無料）プラン
     });
 
     // RDS Proxyの作成
