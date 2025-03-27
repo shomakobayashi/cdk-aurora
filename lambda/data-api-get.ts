@@ -29,7 +29,6 @@ export const handler = async (event: any): Promise<any> => {
       });
       return user;
     }) || [];
-    
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },

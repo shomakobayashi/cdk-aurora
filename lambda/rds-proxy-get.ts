@@ -1,6 +1,7 @@
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import { Client } from 'pg';
 
+// 環境変数
 const secretArn = process.env.SECRET_ARN;
 const dbName = process.env.DB_NAME;
 const proxyEndpoint = process.env.PROXY_ENDPOINT;

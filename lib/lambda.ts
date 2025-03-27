@@ -6,7 +6,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as lambdaBase from 'aws-cdk-lib/aws-lambda';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as rds from 'aws-cdk-lib/aws-rds';
-import * as iam from 'aws-cdk-lib/aws-iam';  // 追加
+import * as iam from 'aws-cdk-lib/aws-iam';
 
 export class Lambda extends Construct {
   public readonly rdsProxyGet: lambda.NodejsFunction;
