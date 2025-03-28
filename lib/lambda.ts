@@ -61,6 +61,7 @@ export class Lambda extends Construct {
     this.rdsProxyGetAlias = new lambdaBase.Alias(this, 'RdsProxyGetAlias', {
       aliasName: 'prod',
       version: this.rdsProxyGet.currentVersion,
+      provisionedConcurrentExecutions: 5
     });
 
     // RDS Proxy（POST）
@@ -89,6 +90,7 @@ export class Lambda extends Construct {
     this.rdsProxyPostAlias = new lambdaBase.Alias(this, 'RdsProxyPostAlias', {
       aliasName: 'prod',
       version: this.rdsProxyPost.currentVersion,
+      provisionedConcurrentExecutions: 5
     });
 
     // Data API（GET）
@@ -114,6 +116,7 @@ export class Lambda extends Construct {
     this.dataApiGetAlias = new lambdaBase.Alias(this, 'DataApiGetAlias', {
       aliasName: 'prod',
       version: this.dataApiGet.currentVersion,
+      provisionedConcurrentExecutions: 5
     });
 
     // Data API（POST）
@@ -139,6 +142,7 @@ export class Lambda extends Construct {
     this.dataApiPostAlias = new lambdaBase.Alias(this, 'DataApiPostAlias', {
       aliasName: 'prod',
       version: this.dataApiPost.currentVersion,
+      provisionedConcurrentExecutions: 5
     });
 
     // Secrets Managerへのアクセス権限を付与

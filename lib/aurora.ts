@@ -77,7 +77,8 @@ export class Aurora extends Construct {
         subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
       },
       requireTLS: false,
-      idleClientTimeout: cdk.Duration.seconds(900),
+      idleClientTimeout: cdk.Duration.seconds(60),
+      maxIdleConnectionsPercent: 70,
       dbProxyName: 'aurora-serverless-proxy',
       debugLogging: true,
     });  
