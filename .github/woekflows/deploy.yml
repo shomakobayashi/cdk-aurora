@@ -1,0 +1,27 @@
+name: Deploy
+
+on:
+  # 手動実行
+  workflow_dispatch:
+  
+  # プルリクエストのオープン、レビュー可能状態、クローズ時に実行
+  pull_request:
+    types: 
+      - opened
+      - ready_for_review
+      - closed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: |
+     (github.event.action == 'opened' && !github.event.pull_request.draft)
+     || github.event.action == 'ready_for_review'
+     || github.event.pull_request.merged == true
+     || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: deploy
+        run: echo "デプロイ処理を実行します"
